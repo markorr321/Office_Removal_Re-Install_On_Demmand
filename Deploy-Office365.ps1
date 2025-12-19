@@ -38,6 +38,9 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $ErrorActionPreference = "Stop"
 $ProgressPreference = 'SilentlyContinue'
 
+# Start total elapsed time stopwatch
+$totalStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
 Clear-Host
 Write-Host ""
 Write-Host "  ╔═══════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -177,8 +180,14 @@ if ($installProcess.ExitCode -eq 0) {
     Write-Host "  ╚═══════════════════════════════════════════╝" -ForegroundColor Yellow
 }
 
+# Stop the stopwatch and display total time
+$totalStopwatch.Stop()
+$totalMinutes = [math]::Floor($totalStopwatch.Elapsed.TotalMinutes)
+$totalSeconds = $totalStopwatch.Elapsed.Seconds
+
 Write-Host ""
 Write-Host "  Install files saved to: $installDir" -ForegroundColor Gray
+Write-Host "  Total time: $($totalMinutes.ToString('00')):$($totalSeconds.ToString('00'))" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Press any key to exit..." -ForegroundColor Gray
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
