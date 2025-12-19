@@ -15,7 +15,6 @@
 # CONFIGURATION - Azure Storage URLs
 # ============================================
 $azureStorageBaseUrl = "https://membranding.blob.core.windows.net/branding"
-$setupExeUrl = "$azureStorageBaseUrl/Office365/setup.exe"
 $configXmlUrl = "$azureStorageBaseUrl/Office365/Configuration.xml"
 
 # Known location for Office 365 files
@@ -54,13 +53,13 @@ New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
 # ============================================
 # STEP 1: Download ODT for uninstall
 # ============================================
-Write-Host "  [1/5] Downloading Office Deployment Tool..." -ForegroundColor Yellow
+Write-Host "  [1/4] Downloading Office Deployment Tool..." -ForegroundColor Yellow
 
 try {
     Invoke-WebRequest -Uri $odtUrl -OutFile "$tempDir\ODT.exe" -UseBasicParsing
-    Write-Host "  [1/5] ODT downloaded" -ForegroundColor Green
+    Write-Host "  [1/4] ODT downloaded" -ForegroundColor Green
 } catch {
-    Write-Host "  [1/5] ERROR: Failed to download ODT - $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  [1/4] ERROR: Failed to download ODT - $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
@@ -87,7 +86,7 @@ foreach ($path in $officeRegPaths) {
 }
 
 if ($officeInstalled) {
-    Write-Host "  [2/5] Uninstalling existing Office 365..." -ForegroundColor Yellow
+    Write-Host "  [2/4] Uninstalling existing Office 365..." -ForegroundColor Yellow
 
     # Create uninstall config
 @"
@@ -122,13 +121,13 @@ if ($officeInstalled) {
     Write-Host ""
     Start-Sleep -Seconds 2
 } else {
-    Write-Host "  [2/5] No existing Office installation found - skipping uninstall" -ForegroundColor Green
+    Write-Host "  [2/4] No existing Office installation found - skipping uninstall" -ForegroundColor Green
 }
 
 # ============================================
 # STEP 3: Download Office 365 files from Azure
 # ============================================
-Write-Host "  [3/5] Downloading Office 365 files to $installDir..." -ForegroundColor Yellow
+Write-Host "  [3/4] Downloading Office 365 files to $installDir..." -ForegroundColor Yellow
 
 if (Test-Path $installDir) {
     Remove-Item -Path $installDir -Recurse -Force
@@ -138,16 +137,16 @@ New-Item -Path $installDir -ItemType Directory -Force | Out-Null
 try {
     Invoke-WebRequest -Uri $setupExeUrl -OutFile "$installDir\setup.exe" -UseBasicParsing
     Invoke-WebRequest -Uri $configXmlUrl -OutFile "$installDir\Configuration.xml" -UseBasicParsing
-    Write-Host "  [3/5] Download complete" -ForegroundColor Green
+    Write-Host "  [3/4] Download complete" -ForegroundColor Green
 } catch {
-    Write-Host "  [3/5] ERROR: Failed to download files - $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  [3/4] ERROR: Failed to download files - $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
 # ============================================
 # STEP 4: Install Office 365
 # ============================================
-Write-Host "  [4/5] Installing Office 365..." -ForegroundColor Yellow
+Write-Host "  [4/4] Installing Office 365..." -ForegroundColor Yellow
 
 $installProcess = Start-Process -FilePath "$installDir\setup.exe" -ArgumentList "/configure `"$installDir\Configuration.xml`"" -PassThru -WindowStyle Hidden
 
@@ -166,16 +165,6 @@ while (-not $installProcess.HasExited) {
 }
 
 Write-Host ""
-Write-Host "  [4/5] Installation complete" -ForegroundColor Green
-
-# ============================================
-# STEP 5: Cleanup and verify
-# ============================================
-Write-Host "  [5/5] Cleaning up..." -ForegroundColor Yellow
-
-Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
-
-Write-Host "  [5/5] Cleanup complete" -ForegroundColor Green
 Write-Host ""
 
 if ($installProcess.ExitCode -eq 0) {
