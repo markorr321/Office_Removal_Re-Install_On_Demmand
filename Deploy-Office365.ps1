@@ -35,7 +35,7 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     exit
 }
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $ProgressPreference = 'SilentlyContinue'
 
 # Start total elapsed time stopwatch
@@ -91,7 +91,8 @@ foreach ($path in $officeRegPaths) {
 if ($officeInstalled) {
     Write-Host "  [2/4] Uninstalling existing Office 365..." -ForegroundColor Yellow
 
-    # Create uninstall config
+    try {
+        # Create uninstall config
 @"
 <Configuration>
   <Remove All="TRUE" />
@@ -100,29 +101,34 @@ if ($officeInstalled) {
 </Configuration>
 "@ | Out-File -FilePath "$tempDir\uninstall.xml" -Encoding UTF8
 
-    $uninstallProcess = Start-Process -FilePath "$tempDir\setup.exe" -ArgumentList "/configure `"$tempDir\uninstall.xml`"" -PassThru -WindowStyle Hidden
+        $uninstallProcess = Start-Process -FilePath "$tempDir\setup.exe" -ArgumentList "/configure `"$tempDir\uninstall.xml`"" -PassThru -WindowStyle Hidden
 
-    $spinner = @('|', '/', '-', '\')
-    $i = 0
-    $elapsed = 0
+        $spinner = @('|', '/', '-', '\')
+        $i = 0
+        $elapsed = 0
 
-    while (-not $uninstallProcess.HasExited) {
-        $elapsed++
-        $minutes = [math]::Floor($elapsed / 60)
-        $seconds = $elapsed % 60
-        $spin = $spinner[$i % 4]
-        Write-Host "`r        $spin  Removing Office... [$($minutes.ToString('00')):$($seconds.ToString('00'))] " -NoNewline -ForegroundColor White
-        $i++
-        Start-Sleep -Seconds 1
+        while ($uninstallProcess -and -not $uninstallProcess.HasExited) {
+            $elapsed++
+            $minutes = [math]::Floor($elapsed / 60)
+            $seconds = $elapsed % 60
+            $spin = $spinner[$i % 4]
+            Write-Host "`r        $spin  Removing Office... [$($minutes.ToString('00')):$($seconds.ToString('00'))] " -NoNewline -ForegroundColor White
+            $i++
+            Start-Sleep -Seconds 1
+        }
+
+        Write-Host ""
+        Write-Host ""
+        Write-Host "  ╔═══════════════════════════════════════════╗" -ForegroundColor Green
+        Write-Host "  ║      Office 365 Uninstall Complete        ║" -ForegroundColor Green
+        Write-Host "  ╚═══════════════════════════════════════════╝" -ForegroundColor Green
+        Write-Host ""
+        Start-Sleep -Seconds 2
+    } catch {
+        Write-Host ""
+        Write-Host "  [2/4] WARNING: Uninstall encountered an issue - continuing..." -ForegroundColor Yellow
+        Write-Host "        $($_.Exception.Message)" -ForegroundColor Gray
     }
-
-    Write-Host ""
-    Write-Host ""
-    Write-Host "  ╔═══════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "  ║      Office 365 Uninstall Complete        ║" -ForegroundColor Green
-    Write-Host "  ╚═══════════════════════════════════════════╝" -ForegroundColor Green
-    Write-Host ""
-    Start-Sleep -Seconds 2
 } else {
     Write-Host "  [2/4] No existing Office installation found - skipping uninstall" -ForegroundColor Green
 }
