@@ -31,7 +31,10 @@ $scriptUrl = "https://raw.githubusercontent.com/markorr321/Office_Removal_Re-Ins
 # ============================================
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "Elevating to administrator..." -ForegroundColor Yellow
-    Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass -Command `"irm '$scriptUrl' | iex`"" -Verb RunAs
+    # Download script to temp file and run it (more stable than irm | iex)
+    $tempScript = "$env:TEMP\Deploy-Office365.ps1"
+    Invoke-WebRequest -Uri $scriptUrl -OutFile $tempScript -UseBasicParsing
+    Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass -NoExit -File `"$tempScript`"" -Verb RunAs
     exit
 }
 
