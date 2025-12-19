@@ -22,17 +22,7 @@ $scriptUrl = "https://raw.githubusercontent.com/markorr321/Office_Removal_Re-Ins
 # ============================================
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "Elevating to administrator..." -ForegroundColor Yellow
-    try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        # Use C:\Office365Install instead of temp to avoid permission issues
-        if (-not (Test-Path "C:\Office365Install")) { New-Item -Path "C:\Office365Install" -ItemType Directory -Force | Out-Null }
-        $tempScript = "C:\Office365Install\Deploy-Office365.ps1"
-        Invoke-WebRequest -Uri $scriptUrl -OutFile $tempScript -UseBasicParsing
-        Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass -NoExit -File `"$tempScript`"" -Verb RunAs
-    } catch {
-        Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
-        Read-Host "Press Enter to exit"
-    }
+    Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass -NoExit -Command `"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm '$scriptUrl' | iex`"" -Verb RunAs
     exit
 }
 
